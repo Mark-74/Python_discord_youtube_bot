@@ -16,6 +16,16 @@ ydl_opts = {
     'outtmpl': 'audio.mp3',  # Output filename
 }
 
+def findSong(keyword: str):
+    apiUrl = f'https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=1&q={keyword}&key={API_KEY}'
+    data = requests.get(apiUrl).json()
+
+    if not data["items"]: raise NotFoundError()
+
+    videoTitle = data["items"][0]['snippet']['title']
+
+    return videoTitle
+
 def youtubeAPI(keyword: str):
     apiUrl = f'https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=1&q={keyword}&key={API_KEY}'
     data = requests.get(apiUrl).json()

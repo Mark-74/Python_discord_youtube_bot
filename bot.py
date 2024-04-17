@@ -40,7 +40,7 @@ async def search(interaction: discord.Interaction, title: str):
         interaction.response.send_message("You must be connected to a voice chat first.", ephemeral=True)
 
     queue.append(title)
-    await interaction.response.send_message(f"'{title}' added to the queue!")
+    await interaction.response.send_message(f"**{youtubeDl.findSong(title)}** added to the queue!")
 
     if len(queue) == 1:
         while len(queue) != 0:
