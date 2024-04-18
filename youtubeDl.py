@@ -14,6 +14,8 @@ ydl_opts = {
         'preferredquality': '192',  # Set bitrate to 192 kbps
     }],
     'outtmpl': 'audio.mp3',  # Output filename
+    #'quiet': True,  # Suppress console output
+    'force_overwrite': True,  # Overwrite existing files
 }
 
 def findSong(keyword: str):

@@ -2,6 +2,7 @@ import discord, os, youtubeDl
 from discord.ext import commands
 from discord import app_commands
 from typing import Optional
+import asyncio
 
 token = open('token.txt', 'r').readline()
 
@@ -9,6 +10,7 @@ intents = discord.Intents.all()
 
 bot = commands.Bot(command_prefix='/', intents=intents)
 
+ffmpegPath = "C:\\Users\\Marco\\Downloads\\ffmpeg-master-latest-win64-gpl\\bin\\ffmpeg.exe"
 queue = []
 
 @bot.event #gli eventi hanno questo decoratore
@@ -29,29 +31,32 @@ async def spooky(interaction: discord.Interaction):
 
 @bot.tree.command(name='play', description='plays a song')
 async def search(interaction: discord.Interaction, title: str):
+    await interaction.response.defer()
 
     if interaction.user.voice:
         channel = interaction.user.voice.channel
         voice = discord.utils.get(bot.voice_clients, guild=interaction.guild)
 
         if voice == None:
-            await channel.connect()
+            vc = await channel.connect()
     else:
-        interaction.response.send_message("You must be connected to a voice chat first.", ephemeral=True)
-
+        interaction.followup.send("You must be connected to a voice chat first.", ephemeral=True)
+        return
+    
     queue.append(title)
-    await interaction.response.send_message(f"**{youtubeDl.findSong(title)}** added to the queue!")
+    await interaction.followup.send(f"**{youtubeDl.findSong(title)}** added to the queue!")
 
     if len(queue) == 1:
         while len(queue) != 0:
             try:
                 title = youtubeDl.youtubeAPI(queue[0])
                 await interaction.channel.send(f"{title[0]} is now playing.")
+                vc.play(discord.FFmpegPCMAudio(source="audio.mp3"), after = lambda e: asyncio.run_coroutine_threadsafe(interaction.channel.send("song finished, moving to the next..."), bot.loop))
+
             except:
                 await interaction.channel.send(f"'{queue[0]}' not found, skipping...")
+
                 queue.pop(0)
-                continue
-            queue.pop(0)
         
         await discord.utils.get(bot.voice_clients, guild=interaction.guild).disconnect()
 
