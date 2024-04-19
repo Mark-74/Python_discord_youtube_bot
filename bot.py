@@ -29,6 +29,7 @@ async def spooky(interaction: discord.Interaction):
     file = discord.File(os.path.join(os.curdir, 'kanye.jpg'), filename="kanye.jpg")
     await interaction.response.send_message(file=file)
 
+
 @bot.tree.command(name='play', description='plays a song')
 async def search(interaction: discord.Interaction, title: str):
     await interaction.response.defer()
@@ -38,27 +39,42 @@ async def search(interaction: discord.Interaction, title: str):
         voice = discord.utils.get(bot.voice_clients, guild=interaction.guild)
 
         if voice == None:
+            queueing = False
             vc = await channel.connect()
+        else: queueing = True
     else:
-        interaction.followup.send("You must be connected to a voice chat first.", ephemeral=True)
+        await interaction.followup.send("You must be connected to a voice chat first.", ephemeral=True)
         return
     
+    #adding song to queue
     queue.append(title)
     await interaction.followup.send(f"**{youtubeDl.findSong(title)}** added to the queue!")
 
-    if len(queue) == 1:
-        while len(queue) != 0:
+    def after_playing(interaction: discord.Interaction, vc: discord.VoiceClient):
+        asyncio.run_coroutine_threadsafe(interaction.channel.send("Song finished, moving on to the next."), bot.loop)
+        if len(queue) > 0:
             try:
-                title = youtubeDl.youtubeAPI(queue[0])
-                await interaction.channel.send(f"{title[0]} is now playing.")
-                vc.play(discord.FFmpegPCMAudio(source="audio.mp3"), after = lambda e: asyncio.run_coroutine_threadsafe(interaction.channel.send("song finished, moving to the next..."), bot.loop))
-
+                title = youtubeDl.youtubeAPI(queue.pop(0))
             except:
-                await interaction.channel.send(f"'{queue[0]}' not found, skipping...")
+                after_playing(interaction=interaction, vc=vc)
+                return
+            
+            interaction.channel.send(f"{title[0]} is now playing.")
+            vc.play(discord.FFmpegPCMAudio(source="audio.mp3"), after = lambda e: after_playing(interaction=interaction, vc=vc))
 
-                queue.pop(0)
+        else:
+            asyncio.run_coroutine_threadsafe(vc.disconnect(), bot.loop)
+
+    #starting player if it wasn't in the vc
+    if not queueing:
+        try: title = youtubeDl.youtubeAPI(queue.pop(0))
+        except: 
+            await interaction.channel.send("Not found.")
+            vc.disconnect()
+            return
         
-        await discord.utils.get(bot.voice_clients, guild=interaction.guild).disconnect()
+        await interaction.channel.send(f"{title[0]} is now playing.")
+        vc.play(discord.FFmpegPCMAudio(source="audio.mp3"), after = lambda e: after_playing(interaction=interaction, vc=vc))
 
     
 
