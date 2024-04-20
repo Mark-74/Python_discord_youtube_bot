@@ -52,15 +52,14 @@ async def search(interaction: discord.Interaction, title: str):
 
     def after_playing(interaction: discord.Interaction, vc: discord.VoiceClient):
         if len(queue) > 0:
-            asyncio.run_coroutine_threadsafe(interaction.channel.send("Song finished, moving on to the next."), bot.loop)
-        
+            msg = asyncio.run_coroutine_threadsafe(interaction.channel.send("Song finished, moving on to the next."), bot.loop).result()
             try:
                 title = youtubeDl.youtubeAPI(queue.pop(0))
             except:
                 after_playing(interaction=interaction, vc=vc)
                 return
             
-            asyncio.run_coroutine_threadsafe(interaction.channel.send(f"{title[0]} is now playing."))
+            asyncio.run_coroutine_threadsafe(msg.edit(content=f"{title[0]} is now playing."), bot.loop)
             vc.play(discord.FFmpegPCMAudio(source=title[1]), after = lambda e: after_playing(interaction=interaction, vc=vc))
 
         else:
