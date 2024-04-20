@@ -12,6 +12,7 @@ bot = commands.Bot(command_prefix='/', intents=intents)
 
 ffmpegPath = "C:\\Users\\Marco\\Downloads\\ffmpeg-master-latest-win64-gpl\\bin\\ffmpeg.exe"
 queue = []
+cleanQueue = []
 
 @bot.event #gli eventi hanno questo decoratore
 async def on_ready():
@@ -50,17 +51,21 @@ async def search(interaction: discord.Interaction, title: str):
     queue.append(title)
     await interaction.followup.send(f"**{youtubeDl.findSong(title)}** added to the queue!")
 
-    def after_playing(interaction: discord.Interaction, vc: discord.VoiceClient):
+    def after_playing(interaction: discord.Interaction, vc: discord.VoiceClient, previousSongFile: str):
+        if len(cleanQueue) >= 2:
+            youtubeDl.clean(cleanQueue.pop(0))
+            
         if len(queue) > 0:
             msg = asyncio.run_coroutine_threadsafe(interaction.channel.send("Song finished, moving on to the next."), bot.loop).result()
             try:
                 title = youtubeDl.youtubeAPI(queue.pop(0))
             except:
-                after_playing(interaction=interaction, vc=vc)
+                after_playing(interaction=interaction, vc=vc, previousSongFile=previousSongFile)
                 return
             
+            cleanQueue.append(title[1])
             asyncio.run_coroutine_threadsafe(msg.edit(content=f"{title[0]} is now playing."), bot.loop)
-            vc.play(discord.FFmpegPCMAudio(source=title[1]), after = lambda e: after_playing(interaction=interaction, vc=vc))
+            vc.play(discord.FFmpegPCMAudio(source=title[1]), after = lambda e: after_playing(interaction=interaction, vc=vc, previousSongFile=title[1]))
 
         else:
             asyncio.run_coroutine_threadsafe(vc.disconnect(), bot.loop)
@@ -74,7 +79,8 @@ async def search(interaction: discord.Interaction, title: str):
             return
         
         await interaction.channel.send(f"{title[0]} is now playing.")
-        vc.play(discord.FFmpegPCMAudio(source=title[1]), after = lambda e: after_playing(interaction=interaction, vc=vc))
+        cleanQueue.append(title[1])
+        vc.play(discord.FFmpegPCMAudio(source=title[1]), after = lambda e: after_playing(interaction=interaction, vc=vc, previousSongFile=title[1]))
 
     
 
@@ -83,6 +89,10 @@ async def skip(interaction: discord.Interaction):
     if interaction.user.voice:
         voice = discord.utils.get(bot.voice_clients, guild=interaction.guild)
 
+        if not voice:
+            await interaction.response.send_message("In order to skip the bot must be connected to a channel.", ephemeral=True)
+            return
+        
         if interaction.user.voice.channel == voice.channel:
             vc = interaction.guild.voice_client
             vc.stop()

@@ -28,12 +28,13 @@ def youtubeAPI(keyword: str):
     videoId = data["items"][0]['id']['videoId']
     videoTitle = data["items"][0]['snippet']['title']
 
-    url = downloadAudio(videoId=videoId, title=videoTitle)
-    return url, videoTitle + '.mp3'
+    url, errExtension = downloadAudio(videoId=videoId, title=videoTitle)
+    return url, videoTitle + errExtension + '.mp3'
 
-def downloadAudio(videoId: str, title:str) -> str: #remember to add ffmpeg to the system enviroment variables
+def downloadAudio(videoId: str, title:str) -> tuple[str, str]: #remember to add ffmpeg to the system enviroment variables
     videoUrl = f"https://www.youtube.com/watch?v={videoId}"
 
+    errExtension = ''
     ydl_opts = {
     'format': 'bestaudio/best',  # Select best audio format available
     'postprocessors': [{
@@ -47,10 +48,16 @@ def downloadAudio(videoId: str, title:str) -> str: #remember to add ffmpeg to th
     }
     
     # Download the audio
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-         ydl.download([videoUrl])
+    try:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            ydl.download([videoUrl])
+    except:
+        ydl_opts['outtmpl'] = f'{title}err'
+        errExtension = 'err'
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            ydl.download([videoUrl])
     
-    return videoUrl
+    return videoUrl, errExtension
 
 def clean(file: str):
     os.remove(file)
