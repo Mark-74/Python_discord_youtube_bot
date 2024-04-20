@@ -51,16 +51,17 @@ async def search(interaction: discord.Interaction, title: str):
     await interaction.followup.send(f"**{youtubeDl.findSong(title)}** added to the queue!")
 
     def after_playing(interaction: discord.Interaction, vc: discord.VoiceClient):
-        asyncio.run_coroutine_threadsafe(interaction.channel.send("Song finished, moving on to the next."), bot.loop)
         if len(queue) > 0:
+            asyncio.run_coroutine_threadsafe(interaction.channel.send("Song finished, moving on to the next."), bot.loop)
+        
             try:
                 title = youtubeDl.youtubeAPI(queue.pop(0))
             except:
                 after_playing(interaction=interaction, vc=vc)
                 return
             
-            interaction.channel.send(f"{title[0]} is now playing.")
-            vc.play(discord.FFmpegPCMAudio(source="audio.mp3"), after = lambda e: after_playing(interaction=interaction, vc=vc))
+            asyncio.run_coroutine_threadsafe(interaction.channel.send(f"{title[0]} is now playing."))
+            vc.play(discord.FFmpegPCMAudio(source=title[1]), after = lambda e: after_playing(interaction=interaction, vc=vc))
 
         else:
             asyncio.run_coroutine_threadsafe(vc.disconnect(), bot.loop)
@@ -74,12 +75,23 @@ async def search(interaction: discord.Interaction, title: str):
             return
         
         await interaction.channel.send(f"{title[0]} is now playing.")
-        vc.play(discord.FFmpegPCMAudio(source="audio.mp3"), after = lambda e: after_playing(interaction=interaction, vc=vc))
+        vc.play(discord.FFmpegPCMAudio(source=title[1]), after = lambda e: after_playing(interaction=interaction, vc=vc))
 
     
 
 @bot.tree.command(name='skip', description='skips the current song')
 async def skip(interaction: discord.Interaction):
-    await interaction.response.send_message()
+    if interaction.user.voice:
+        voice = discord.utils.get(bot.voice_clients, guild=interaction.guild)
+
+        if interaction.user.voice.channel == voice.channel:
+            vc = interaction.guild.voice_client
+            vc.stop()
+            await interaction.response.send_message("Song skipped.")
+        else:
+            await interaction.response.send_message("In order to skip you must be connected to the same channel as the bot.", ephemeral=True)
+    else:
+        await interaction.response.send_message("In order to skip you must be connected to the same channel as the bot.", ephemeral=True)
+    
 
 bot.run(token)
