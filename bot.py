@@ -51,7 +51,7 @@ async def search(interaction: discord.Interaction, title: str):
     queue.append(title)
     await interaction.followup.send(f"**{youtubeDl.findSong(title)}** added to the queue!")
 
-    def after_playing(interaction: discord.Interaction, vc: discord.VoiceClient, previousSongFile: str):
+    def after_playing(interaction: discord.Interaction, vc: discord.VoiceClient):
         if len(cleanQueue) >= 2:
             youtubeDl.clean(cleanQueue.pop(0))
             
@@ -60,12 +60,12 @@ async def search(interaction: discord.Interaction, title: str):
             try:
                 title = youtubeDl.youtubeAPI(queue.pop(0))
             except:
-                after_playing(interaction=interaction, vc=vc, previousSongFile=previousSongFile)
+                after_playing(interaction=interaction, vc=vc)
                 return
             
             cleanQueue.append(title[1])
             asyncio.run_coroutine_threadsafe(msg.edit(content=f"{title[0]} is now playing."), bot.loop)
-            vc.play(discord.FFmpegPCMAudio(source=title[1]), after = lambda e: after_playing(interaction=interaction, vc=vc, previousSongFile=title[1]))
+            vc.play(discord.FFmpegPCMAudio(source=title[1]), after = lambda e: after_playing(interaction=interaction, vc=vc))
 
         else:
             asyncio.run_coroutine_threadsafe(vc.disconnect(), bot.loop)
