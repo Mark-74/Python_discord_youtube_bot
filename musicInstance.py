@@ -37,7 +37,7 @@ class musicInstance:
             if len(self.cleanQueue) >= 2: self.clean()
 
             try: #download song
-                msg = asyncio.run_coroutine_threadsafe(self.channel.send("Song finished, moving on to the next."), self.bot.loop).result()
+                msg = asyncio.run_coroutine_threadsafe(self.channel.send("Moving on to the next."), self.bot.loop).result()
                 result = youtubeDl.youtubeAPI(keyword=self.queue.pop(0), guild_id=self.guild_id)
             except: #song not found
                 if len(self.queue) > 0: asyncio.run_coroutine_threadsafe(msg.edit(content="Song not found, moving on to the next."), self.bot.loop)
