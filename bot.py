@@ -18,7 +18,7 @@ cleanQueue = []
 
 @bot.event #gli eventi hanno questo decoratore
 async def on_ready():
-    await bot.change_presence(status=discord.Status.online, activity=discord.Game("listening to youtube"))
+    await bot.change_presence(status=discord.Status.online, activity=discord.activity.CustomActivity(name="listening to youtube"))
     synced = await bot.tree.sync()
     print(f"{len(synced)} commands loaded.")
     print(f'We have logged in as {bot.user}')
@@ -37,53 +37,21 @@ async def spooky(interaction: discord.Interaction):
 async def search(interaction: discord.Interaction, title: str):
     await interaction.response.defer()
 
-    if interaction.user.voice:
-        channel = interaction.user.voice.channel
-        voice = discord.utils.get(bot.voice_clients, guild=interaction.guild)
-
-        if voice == None:
+    if not interaction.guild_id in instances:
+        if interaction.user.voice:
+            instances[interaction.guild_id] = musicInstance(guild_id=interaction.guild_id, bot=bot, voiceChannel=interaction.user.voice.channel, voiceClient=await interaction.user.voice.channel.connect(), channel=interaction.channel)
             queueing = False
-            vc = await channel.connect()
-        else: queueing = True
-    else:
-        await interaction.followup.send("You must be connected to a voice chat first.", ephemeral=True)
-        return
-    
-    #adding song to queue
-    queue.append(title)
-    await interaction.followup.send(f"**{youtubeDl.findSong(title)}** added to the queue!")
-
-    def after_playing(interaction: discord.Interaction, vc: discord.VoiceClient):
-        if len(cleanQueue) >= 2:
-            youtubeDl.clean(cleanQueue.pop(0))
-            
-        if len(queue) > 0:
-            msg = asyncio.run_coroutine_threadsafe(interaction.channel.send("Song finished, moving on to the next."), bot.loop).result()
-            try:
-                title = youtubeDl.youtubeAPI(queue.pop(0))
-            except:
-                after_playing(interaction=interaction, vc=vc)
-                return
-            
-            cleanQueue.append(title[1])
-            asyncio.run_coroutine_threadsafe(msg.edit(content=f"{title[0]} is now playing."), bot.loop)
-            vc.play(discord.FFmpegPCMAudio(source=title[1]), after = lambda e: after_playing(interaction=interaction, vc=vc))
-
         else:
-            asyncio.run_coroutine_threadsafe(vc.disconnect(), bot.loop)
-
-    #starting player if it wasn't in the vc
-    if not queueing:
-        try: title = youtubeDl.youtubeAPI(queue.pop(0))
-        except: 
-            await interaction.channel.send("Not found.")
-            await vc.disconnect()
+            await interaction.followup.send("You must be connected to a voice chat first.", ephemeral=True)
             return
-        
-        await interaction.channel.send(f"{title[0]} is now playing.")
-        cleanQueue.append(title[1])
-        vc.play(discord.FFmpegPCMAudio(source=title[1]), after = lambda e: after_playing(interaction=interaction, vc=vc))
+    else:
+        queueing = True
+    
+    curr = instances[interaction.guild_id]
+    await interaction.followup.send(f"**{curr.addToQueue(title)}** added to the queue!")
 
+    if not queueing:
+        curr.play_Song()
     
 
 @bot.tree.command(name='skip', description='skips the current song')
@@ -95,14 +63,12 @@ async def skip(interaction: discord.Interaction):
             await interaction.response.send_message("In order to skip the bot must be connected to a channel.", ephemeral=True)
             return
         
-        if interaction.user.voice.channel == voice.channel:
-            vc = interaction.guild.voice_client
-            vc.stop()
+        if interaction.user.voice.channel == instances[interaction.guild_id].voiceChannel:
+            instances[interaction.guild_id].vc.stop()
             await interaction.response.send_message("Song skipped.")
         else:
             await interaction.response.send_message("In order to skip you must be connected to the same channel as the bot.", ephemeral=True)
     else:
         await interaction.response.send_message("In order to skip you must be connected to the same channel as the bot.", ephemeral=True)
     
-
 bot.run(token)
