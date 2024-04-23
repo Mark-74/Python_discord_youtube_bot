@@ -3,9 +3,11 @@ from discord.ext import commands
 from discord import app_commands
 from typing import Optional
 import asyncio
+from musicInstance import musicInstance
 
 token = open('token.txt', 'r').readline()
 
+instances = dict()
 intents = discord.Intents.all()
 
 bot = commands.Bot(command_prefix='/', intents=intents)
@@ -75,12 +77,12 @@ async def search(interaction: discord.Interaction, title: str):
         try: title = youtubeDl.youtubeAPI(queue.pop(0))
         except: 
             await interaction.channel.send("Not found.")
-            vc.disconnect()
+            await vc.disconnect()
             return
         
         await interaction.channel.send(f"{title[0]} is now playing.")
         cleanQueue.append(title[1])
-        vc.play(discord.FFmpegPCMAudio(source=title[1]), after = lambda e: after_playing(interaction=interaction, vc=vc, previousSongFile=title[1]))
+        vc.play(discord.FFmpegPCMAudio(source=title[1]), after = lambda e: after_playing(interaction=interaction, vc=vc))
 
     
 
