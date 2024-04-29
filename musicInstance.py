@@ -2,13 +2,13 @@ import discord, youtubeDl, asyncio
 from discord.ext import commands
 
 class musicInstance:
-    def __init__(self, bot: commands.bot, guild_id: discord.interactions.Interaction.guild_id,voiceChannel: discord.VoiceChannel, voiceClient: discord.VoiceClient, channel: discord.channel) -> None:
+    def __init__(self, bot: commands.bot, guild_id: discord.interactions.Interaction.guild_id,voiceChannel: discord.VoiceChannel, voiceClient: discord.VoiceClient, channel: discord.channel, cleanQueue = []) -> None:
         self.guild_id = guild_id    #guild of the current bot instance
         self.channel = channel      #channel used to display ongoing songs
         self.voiceChannel = voiceChannel
         self.vc = voiceClient       #active connection to a channel
         self.queue = []
-        self.cleanQueue = []
+        self.cleanQueue = cleanQueue
         self.bot = bot
     
     def play_Song(self) -> None:

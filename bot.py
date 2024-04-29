@@ -44,6 +44,9 @@ async def search(interaction: discord.Interaction, title: str):
         else:
             await interaction.followup.send("You must be connected to a voice chat first.", ephemeral=True)
             return
+    elif not instances[interaction.guild_id].vc.is_playing():
+        instances[interaction.guild_id] = musicInstance(guild_id=interaction.guild_id, bot=bot, voiceChannel=interaction.user.voice.channel, voiceClient=await interaction.user.voice.channel.connect(), channel=interaction.channel, cleanQueue=instances[interaction.guild_id].cleanQueue)
+        queueing = False
     else:
         queueing = True
     
