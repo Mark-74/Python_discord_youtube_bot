@@ -12,10 +12,6 @@ intents = discord.Intents.all()
 
 bot = commands.Bot(command_prefix='/', intents=intents)
 
-ffmpegPath = "C:\\Users\\Marco\\Downloads\\ffmpeg-master-latest-win64-gpl\\bin\\ffmpeg.exe"
-queue = []
-cleanQueue = []
-
 @bot.event #gli eventi hanno questo decoratore
 async def on_ready():
     await bot.change_presence(status=discord.Status.online, activity=discord.activity.CustomActivity(name="listening to youtube"))
