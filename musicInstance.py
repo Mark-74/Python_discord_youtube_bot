@@ -42,6 +42,7 @@ class musicInstance:
                 result = youtubeDl.youtubeAPI(keyword=self.queue.pop(0), guild_id=self.guild_id)
             except: #song not found
                 if len(self.queue) > 0: asyncio.run_coroutine_threadsafe(msg.edit(content="Song not found, moving on to the next."), self.bot.loop)
+                else: asyncio.run_coroutine_threadsafe(msg.edit(content="Song not found"))
                 self.next_Song()
                 return
 
