@@ -53,7 +53,7 @@ async def search(interaction: discord.Interaction, title: str):
     await interaction.followup.send(embed=embed)
 
     if not queueing:
-        curr.play_Song()
+        await curr.play_Song()
     
 
 @bot.tree.command(name='skip', description='skips the current song')
