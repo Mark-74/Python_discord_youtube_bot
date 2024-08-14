@@ -12,6 +12,15 @@ class musicInstance:
         self.bot = bot
         
     class View(discord.ui.View):
+        def __init__(self, instance):
+            super().__init__(timeout=None)
+            self.instance = instance
+            self.add_item(self.PauseButton(instance))
+            self.add_item(self.ResumeButton(instance))
+            self.add_item(self.QueueButton(instance))
+            self.add_item(self.SkipButton(instance))
+            self.add_item(self.StopButton(instance))
+            
         class SkipButton(discord.ui.Button):
             def __init__(self, instance):
                 super().__init__(style=discord.ButtonStyle.secondary, emoji='⏩', custom_id="skip")
@@ -61,14 +70,7 @@ class musicInstance:
                     await interaction.response.send_message("Resuming the current song.", ephemeral=True)
                 else:
                     await interaction.response.send_message("The song is already playing.", ephemeral=True)
-        
-        def __init__(self, instance):
-            super().__init__(timeout=None)
-            self.add_item(self.QueueButton(instance))
-            self.add_item(self.SkipButton(instance))
-            self.add_item(self.StopButton(instance))
-            self.add_item(self.PauseButton(instance))
-            self.add_item(self.ResumeButton(instance))
+
     
     async def play_Song(self) -> None:
         if len(self.queue) > 0:
@@ -76,7 +78,7 @@ class musicInstance:
             if len(self.cleanQueue) >= 2: self.clean()
 
             try: #download song
-                result = youtubeDl.youtubeAPI(keyword=self.queue.pop(0), guild_id=self.guild_id)
+                result = youtubeDl.downloadAudio(keyword=self.queue.pop(0), guild_id=self.guild_id)
             except Exception as e: #song not found
                 if len(self.queue) > 0: await self.channel.send(content="Song not found, moving on to the next.")
                 else: await self.channel.send(content="Song not found")
@@ -100,7 +102,7 @@ class musicInstance:
 
             try: #download song
                 msg = await self.channel.send("Moving on to the next.")
-                result = youtubeDl.youtubeAPI(keyword=self.queue.pop(0), guild_id=self.guild_id)
+                result = youtubeDl.downloadAudio(keyword=self.queue.pop(0), guild_id=self.guild_id)
             except: #song not found
                 if len(self.queue) > 0: await msg.edit(content="Song not found, moving on to the next.")
                 else: await msg.edit(content="Song not found")
