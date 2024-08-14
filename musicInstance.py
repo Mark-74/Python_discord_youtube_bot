@@ -40,7 +40,7 @@ class musicInstance:
         
         class PauseButton(discord.ui.Button):
             def __init__(self, instance):
-                super().__init__(style=discord.ButtonStyle.gray, emoji="⏸️", custom_id="pause")
+                super().__init__(style=discord.ButtonStyle.blurple, emoji="⏸️", custom_id="pause")
                 self.instance = instance
             
             async def callback(self, interaction: discord.Interaction):
@@ -52,7 +52,7 @@ class musicInstance:
         
         class ResumeButton(discord.ui.Button):
             def __init__(self, instance):
-                super().__init__(style=discord.ButtonStyle.gray, emoji="▶️", custom_id="resume")
+                super().__init__(style=discord.ButtonStyle.blurple, emoji="▶️", custom_id="resume")
                 self.instance = instance
             
             async def callback(self, interaction: discord.Interaction):
@@ -138,4 +138,5 @@ class musicInstance:
         for song in self.queue:
             result += f"**{song}**\n"
         
+        if result == "": result = "No songs in queue."
         return result
