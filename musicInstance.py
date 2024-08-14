@@ -44,8 +44,11 @@ class musicInstance:
                 self.instance = instance
             
             async def callback(self, interaction: discord.Interaction):
-                self.instance.vc.pause()
-                await interaction.response.send_message("Pausing the current song.", ephemeral=True)
+                if self.instance.vc.is_playing(): 
+                    self.instance.vc.pause()
+                    await interaction.response.send_message("Pausing the current song.", ephemeral=True)
+                else:
+                    await interaction.response.send_message("The song is already paused.", ephemeral=True)
         
         class ResumeButton(discord.ui.Button):
             def __init__(self, instance):
@@ -53,8 +56,11 @@ class musicInstance:
                 self.instance = instance
             
             async def callback(self, interaction: discord.Interaction):
-                self.instance.vc.resume()
-                await interaction.response.send_message("Resuming the current song.", ephemeral=True)
+                if self.instance.vc.is_paused():
+                    self.instance.vc.resume()
+                    await interaction.response.send_message("Resuming the current song.", ephemeral=True)
+                else:
+                    await interaction.response.send_message("The song is already playing.", ephemeral=True)
         
         def __init__(self, instance):
             super().__init__(timeout=None)
