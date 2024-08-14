@@ -1,11 +1,12 @@
-import discord, os, youtubeDl
+import discord, os, youtubeDl, dotenv
 from discord.ext import commands
 from discord import app_commands, Embed
 from typing import Optional
 import asyncio
 from musicInstance import musicInstance
 
-token = open('token.txt', 'r').readline()
+dotenv.load_dotenv()
+token = os.getenv('TOKEN')
 
 instances = dict()
 intents = discord.Intents.all()

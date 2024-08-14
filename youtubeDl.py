@@ -1,10 +1,14 @@
-import requests, yt_dlp
+import requests, yt_dlp, dotenv
 import os, discord
 
 class NotFoundError(Exception):
     pass
 
-API_KEY = 'AIzaSyCrDaYeqhE9JzbSUS3ALlJgexjGrRCf5w4'
+dotenv.load_dotenv()
+API_KEY = os.getenv('YOUTUBE_API_KEY')
+DIR = 'downloads/'
+
+if not os.path.exists('downloads'): os.mkdir('downloads')
 
 # Options for yt-dlp
 
@@ -29,7 +33,7 @@ def youtubeAPI(keyword: str, guild_id="1234") -> tuple[str, str]:
     videoTitle = data["items"][0]['snippet']['title']
 
     url, errExtension = downloadAudio(videoId=videoId, title=videoTitle, guild_id=guild_id)
-    return url, f"{videoTitle}{errExtension}-{guild_id}.mp3"
+    return url, f"{DIR}{videoTitle}{errExtension}-{guild_id}.mp3"
 
 def downloadAudio(videoId: str, title:str, guild_id: discord.interactions.Interaction.guild_id) -> tuple[str, str]: #remember to add ffmpeg to the system enviroment variables
     videoUrl = f"https://www.youtube.com/watch?v={videoId}"
@@ -42,7 +46,7 @@ def downloadAudio(videoId: str, title:str, guild_id: discord.interactions.Intera
         'preferredcodec': 'mp3',  # Convert to MP3
         'preferredquality': '192',  # Set bitrate to 192 kbps
     }],
-    'outtmpl': f'{title}-{guild_id}',  # Output filename
+    'outtmpl': f'{DIR}{title}-{guild_id}',  # Output filename
     #'quiet': True,  # Suppress console output
     #'force_overwrite': True,  # Overwrite existing files
     }
@@ -52,7 +56,7 @@ def downloadAudio(videoId: str, title:str, guild_id: discord.interactions.Intera
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             ydl.download([videoUrl])
     except:
-        ydl_opts['outtmpl'] = f'{title}err-{guild_id}'
+        ydl_opts['outtmpl'] = f'{DIR}{title}err-{guild_id}'
         errExtension = 'err'
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             ydl.download([videoUrl])

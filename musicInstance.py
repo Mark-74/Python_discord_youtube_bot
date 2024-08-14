@@ -90,7 +90,7 @@ class musicInstance:
 
         else: await self.vc.disconnect()
 
-    async def next_Song(self, last: discord.message) -> None:
+    async def next_Song(self, last: discord.Message=None) -> None:
         if last:
             await last.delete()
         #check for new song to play
