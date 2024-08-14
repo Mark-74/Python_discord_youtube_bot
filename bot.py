@@ -1,6 +1,6 @@
 import discord, os, youtubeDl
 from discord.ext import commands
-from discord import app_commands
+from discord import app_commands, Embed
 from typing import Optional
 import asyncio
 from musicInstance import musicInstance
@@ -47,7 +47,10 @@ async def search(interaction: discord.Interaction, title: str):
         queueing = True
     
     curr = instances[interaction.guild_id]
-    await interaction.followup.send(f"**{curr.addToQueue(title)}** added to the queue!")
+    embed = Embed(title="Song added to the queue", description=f"**{curr.addToQueue(title)}** added to the queue by {interaction.user.mention}", color=discord.Color.blurple())
+    embed.set_author(name=interaction.user.display_name, icon_url=interaction.user.avatar.url if interaction.user.avatar else interaction.user.display_avatar.url)
+
+    await interaction.followup.send(embed=embed)
 
     if not queueing:
         curr.play_Song()
