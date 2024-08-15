@@ -15,8 +15,6 @@ class musicInstance:
         def __init__(self, instance):
             super().__init__(timeout=None)
             self.instance = instance
-            self.add_item(self.PauseButton(instance))
-            self.add_item(self.ResumeButton(instance))
             self.add_item(self.QueueButton(instance))
             self.add_item(self.SkipButton(instance))
             self.add_item(self.StopButton(instance))
@@ -32,11 +30,11 @@ class musicInstance:
         
         class QueueButton(discord.ui.Button):
             def __init__(self, instance):
-                super().__init__(style=discord.ButtonStyle.green, emoji='🚦', custom_id="queue")
+                super().__init__(style=discord.ButtonStyle.green, label='Show queue', emoji='🚦', custom_id="queue")
                 self.instance = instance
             
             async def callback(self, interaction: discord.Interaction):
-                await interaction.response.send_message(content=self.instance.listQueue())
+                await interaction.response.send_message(content=self.instance.listQueue(), ephemeral=True)
         
         class StopButton(discord.ui.Button):
             def __init__(self, instance):
@@ -47,29 +45,18 @@ class musicInstance:
                 await interaction.response.send_message("Bot disconnected.", ephemeral=True)
                 await self.instance.stop()
         
-        class PauseButton(discord.ui.Button):
-            def __init__(self, instance):
-                super().__init__(style=discord.ButtonStyle.blurple, emoji="⏸️", custom_id="pause")
-                self.instance = instance
-            
-            async def callback(self, interaction: discord.Interaction):
-                if self.instance.vc.is_playing(): 
-                    self.instance.vc.pause()
-                    await interaction.response.send_message("Pausing the current song.", ephemeral=True)
-                else:
-                    await interaction.response.send_message("The song is already paused.", ephemeral=True)
-        
-        class ResumeButton(discord.ui.Button):
-            def __init__(self, instance):
-                super().__init__(style=discord.ButtonStyle.blurple, emoji="▶️", custom_id="resume")
-                self.instance = instance
-            
-            async def callback(self, interaction: discord.Interaction):
-                if self.instance.vc.is_paused():
-                    self.instance.vc.resume()
-                    await interaction.response.send_message("Resuming the current song.", ephemeral=True)
-                else:
-                    await interaction.response.send_message("The song is already playing.", ephemeral=True)
+        @discord.ui.button(label="Pause", style=discord.ButtonStyle.blurple, emoji="⏸️", custom_id="pause/resume")
+        async def callback(self, interaction: discord.Interaction, button: discord.ui.Button):
+            if self.instance.vc.is_paused():
+                self.instance.vc.resume()
+                button.label = "Pause"
+                button.emoji = "⏸️"
+            else:
+                self.instance.vc.pause()
+                button.label = "Resume"
+                button.emoji = "▶️"
+                
+            await interaction.response.edit_message(view=self)
 
     
     async def play_Song(self) -> None:
